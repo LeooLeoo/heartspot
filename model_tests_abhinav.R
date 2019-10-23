@@ -5,14 +5,13 @@ library(e1071)
 library(adabag)
 library(Matrix)
 library(xgboost)
-train_data_01 <- read.csv(file="/Users/abhinavsharma/Desktop/datasets/new_data_01.csv")
-train_data_012 <- read.csv(file="/Users/abhinavsharma/Desktop/datasets/new_data_012.csv")
+train_data_01 <- read.csv(file="datasets/new_data_01.csv")
+#train_data_012 <- read.csv(file="datasets/new_data_012.csv")
 #test_data <- read.csv(file="/Users/abhinavsharma/Desktop/datasets/testing_data.csv")
 #coverting class columns as factors
-train_data_01$class <- as.factor(train_01$class)
-train_data_012$class <- as.factor(train_012$class)
+train_data_01$class <- as.factor(train_data_01$class)
+#train_data_012$class <- as.factor(train_012$class)
 #test_data$class <- as.factor(test_data$class)
-
 colnames(train_data_01)
 
 
@@ -24,11 +23,15 @@ label = as.integer(train_data_01$class)#convert class to label
 
 set.seed(1)
 n = nrow(train_data_01)
-train_index = sample(n,floor(0.75*n))
+train_index = sample(n,floor(0.8*n))
 train_01 = train_data_01[train_index,]
 train_label_01 = label[train_index]
 val_data_01 = train_data_01[-train_index,]
 val_label_01 = label[-train_index]
+species_val = species[-train_index]
+
+
+
 #decision trees
 set.seed(3)
 tree.train_01 = tree(as.factor(train_01$class)~., train_01)
@@ -51,7 +54,7 @@ dt.recall_class0
 
 #random forests
 set.seed(3)
-rf.data <- randomForest(as.factor(train_01$class)~., train_01, ntree=10)
+rf.data <- randomForest(as.factor(train_01$class)~., train_01, ntree=20)
 
 prediction_rf <- predict(rf.data, val_data_01, type="class")
 res_rf <- table(prediction_rf, val_data_01$class)
@@ -63,6 +66,7 @@ rf.recall_class0 <- res_rf[1,1]/(res_rf[1,1]+res_rf[1,2])
 rf.accuracy
 rf.precision_class0
 rf.recall_class0
+
 #support vector machines
 set.seed(3)
 svm.data <- svm(as.factor(train_01$class)~., train_01, kernel = "polynomial")
@@ -78,11 +82,23 @@ recall <- res_svm[1,1]/(res_svm[1,1]+res_svm[1,2])
 accuracy
 precision
 recall
+
+
 # multiclass adaboost classifier
 set.seed(5)
 ada <- adabag::boosting(class~., data = train_01, mfinal = 100)
 prediction_ada <- adabag::predict.boosting(ada, val_data_01)
-prediction_ada$confusion
+res_ada<-prediction_ada$confusion
+res_ada
+accuracy <- (res_ada[1,1] + res_ada[2,2])/sum(res_ada)
+precision <- res_ada[1,1]/(res_ada[1,1]+res_ada[2,1])
+recall <- res_ada[1,1]/(res_ada[1,1]+res_ada[1,2])
+
+accuracy
+precision
+recall
+
+
 
 #XGBoost
 
@@ -103,8 +119,8 @@ val_data_01 <- as.matrix(val_data_01)
 #test.label = label[-train.index]
 #Create the xgb.DMatrix objects
 # Transform the two data sets into xgb.Matrix
-xgb.train = xgb.DMatrix(data=train_01,label=train_label_01)
-xgb.test = xgb.DMatrix(data=val_data_01,label=val_label_01)
+xgb.train = xgb.DMatrix(data=train_01,label=train_label_01 -1)
+xgb.test = xgb.DMatrix(data=val_data_01,label=val_label_01 -1)
 #Define the main parameters
 #train_data = as.matrix(train_data)
 #xgb.train = xgb.DMatrix(data=as.matrix(train_data),label=)
@@ -113,13 +129,13 @@ xgb.test = xgb.DMatrix(data=val_data_01,label=val_label_01)
 params = list(
   booster="gbtree",
   eta=0.001,
-  max_depth=5,
+  max_depth=3,
   gamma=3,
   subsample=0.75,
   colsample_bytree=1,
   objective="multi:softprob",
   eval_metric="mlogloss",
-  num_class=5
+  num_class=2
 )
 #Train the model
 # Train the XGBoost classifer
@@ -140,12 +156,12 @@ xgb.fit
 # Predict outcomes with the test data
 xgb.pred = predict(xgb.fit,val_data_01,reshape=T) 
 xgb.pred = as.data.frame(xgb.pred) 
-colnames(xgb.pred) = c(0,1,2,3,4)
+colnames(xgb.pred) = c(0,1)
 
 #Identify the class with the highest probability for each prediction
 # Use the predicted label with the highest probability
 xgb.pred$prediction = apply(xgb.pred,1,function(x) colnames(xgb.pred)[which.max(x)])
-xgb.pred$label = val_label_01
+xgb.pred$label = species_val
 
 table <- table(xgb.pred$prediction, xgb.pred$label) 
 table
