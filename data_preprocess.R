@@ -1,8 +1,8 @@
 library(dplyr)
-#data
-clev <- read.csv2("/Users/abhinavsharma/Desktop/datasets/processed.cleveland.csv", sep = "")
-swiss <- read.csv2("/Users/abhinavsharma/Desktop/datasets/processed.switzerland.csv", sep = ",")
-va <- read.csv2("/Users/abhinavsharma/Desktop/datasets/processed.va.csv", sep = ",")
+#load the data
+clev <- read.csv2("./datasets/processed.cleveland.csv", sep = "")
+swiss <- read.csv2("./datasets/processed.switzerland.csv", sep = ",")
+va <- read.csv2("./datasets/processed.va.csv", sep = ",")
 
 
 
