@@ -5,7 +5,10 @@ library(e1071)
 library(adabag)
 library(Matrix)
 library(xgboost)
+library("pROC") 
+library("ROCR") 
 train_data_01 <- read.csv(file="datasets/new_data_01.csv")
+swiss_01 <- read.csv(file="datasets/swiss_01.csv")
 #train_data_012 <- read.csv(file="datasets/new_data_012.csv")
 #test_data <- read.csv(file="/Users/abhinavsharma/Desktop/datasets/testing_data.csv")
 #coverting class columns as factors
@@ -42,6 +45,9 @@ text(tree.train_01 ,pretty =0)
 
 prediction_dt <- predict(tree.train_01, val_data_01, type="class")
 res_dt <- table(prediction_dt, val_data_01$class)
+# prediction_dt <- predict(tree.train_01, swiss_01, type="class")
+# res_dt <- table(prediction_dt, swiss_01$class)
+
 res_dt
 
 dt.accuracy <- (res_dt[1,1] + res_dt[2,2])/sum(res_dt)
@@ -66,6 +72,7 @@ rf.recall_class0 <- res_rf[1,1]/(res_rf[1,1]+res_rf[1,2])
 rf.accuracy
 rf.precision_class0
 rf.recall_class0
+
 
 #support vector machines
 set.seed(3)
@@ -189,3 +196,32 @@ xgb.pred.ext$label = test_label
 
 table2 <- table(xgb.pred.ext$prediction, xgb.pred.ext$label) 
 table2
+
+
+
+
+
+##AUC
+## ROC for DT
+auc <- auc(val_data_01$class, as.numeric(prediction_dt))
+auc 
+plot(roc(val_data_01$class, as.numeric(prediction_dt)))
+
+
+## ROC for random forest
+roc(train_01$class, rf.data$votes[,1], plot=TRUE, legacy.axes=TRUE, percent=TRUE, xlab="False Positive Percentage", ylab="True Postive Percentage", col="#4daf4a", lwd=4, print.auc=TRUE)
+
+
+## ROC for SVM
+svm.probs<-predict(svm.data, val_data_01, type="response")
+svm.class<-predict(svm.data, val_data_01)
+svm.labels<- val_data_01$class
+svm.confusion<-confusionMatrix(svm.class, svm.labels) #predicted and actual
+svm.confusion
+
+svm.prediction<-prediction(as.numeric(svm.probs),as.numeric(svm.labels))
+svm.performance<-performance(svm.prediction,"tpr","fpr")
+svm.auc<-performance(svm.prediction,"auc")@y.values[[1]]
+print(svm.auc)
+plot(svm.performance,col="red",lwd=2)
+par(pty = "m")

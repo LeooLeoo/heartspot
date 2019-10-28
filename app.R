@@ -1,139 +1,168 @@
 library(shiny)
 library(shinydashboard)
+library(tree)
 
-#demo
-data <- read.csv(file="processed.cleveland.csv",sep = "") 
+trainingdata <- read.csv(file = "datasets/processed_training_data.csv", sep = ",") 
+trainingdata$class <- as.factor(trainingdata$class)
 
-normalize <- function(x) {
-  return ((x - min(x)) / (max(x) - min(x)))}
+set.seed(3)
+tree.trained = tree(as.factor(trainingdata$class)~., trainingdata)
 
-datasub <- data[,c(1,5)]
-#replace missing values with the median of attributes
-for (i in 1:ncol(datasub)){
-  datasub[is.na(datasub[,i]),i]<- median(datasub[,i],na.rm =TRUE)}
+restecg.result1 = 'normal'
+restecg.result2 = 'having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV'
+restecg.result3 = 'showing probable or definite left ventricular hypertrophy by Estes\'\ criteria'
 
-datanorm <- as.data.frame(lapply(datasub, normalize))
-k_means<-function(x, n=3){
-  nclusters <- n #generalize
-  observations <- nrow(x)
-  set.seed(5) #ע??????????
-  group <- sample(1:nclusters, nrow(x), replace = T) #??????
-  x.cluster <- cbind(x, group)
-  
-  #֮???????ݼ???һ????????
-  while(TRUE){ 
-    centroid <- c()
-    distance <- c()
-    for(g in 1:nclusters){
-      centroid <- c(centroid, mean(x.cluster[x.cluster[, 3] == g, 1]), mean(x.cluster[x.cluster[, 3] == g, 2]))
-    }
-    centroid <- matrix(centroid, nclusters, 2, byrow = T) 
-    
-    for(i in 1:observations){ 
-      for(j in 1:nclusters){
-        dis <- sqrt(sum((x[i,] - centroid[j,])^2))
-        distance <- c(distance, dis)
-      }
-    }
-    distance <- matrix(distance, observations, nclusters, byrow= T)
-    centroid.label <- apply(distance, 1, which.min) 
-    
-    if(all(centroid.label == x.cluster[, 3])){
-      km.clusters <- centroid.label
-      centroid.matrix <- centroid
-      break
-    }else{
-      x.cluster[, 3] <- centroid.label
-    } 
-  }
-  
-  #plot(x, col = km.clusters, pch = 19)
-  #points(centroid.matrix, pch = 19, col = 4, cex = 2)
-  return(list("cluster" = km.clusters, "centers" =centroid.matrix))
-}
-
-
-
-# Define UI (fluidPage is a flexible default choice) ----
 ui <- dashboardPage(skin = "red",
   dashboardHeader(title = "HeartSpot"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Prediction", tabName = "prediction", icon = icon("dashboard")),
-      menuItem("Widgets", tabName = "widgets", icon = icon("th"))
+      menuItem("Information", tabName = "info", icon = icon("info")),
+      menuItem("Prediction", tabName = "prediction", icon = icon("heartbeat"))
     )
   ),
   dashboardBody(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
     ),
-    fluidPage(
-      splitLayout(cellWidths = c("50%", "50%"),
-        fluidPage(
-          fluidRow(
-            column(6,
-                   h4("Symptoms & History:"),
-                   selectInput('CP', 'Chest Pain',  c('typical angina','atypical angina', 'non-anginal pain', 'asymptomatic'), width = "75%"),
-                   selectInput('exang', 'Exercise-induced angina', c('no','yes'), width = "75%"),
-                   selectInput('thal', 'Thallium stress test',  c('normal','fixed defect', 'reversible defect'), width = "75%")
-            ),
-            column(6,
-              h4("Demographics:"),
-              textInput('Age', 'Age','25', width = "50%"),  
-              selectInput('Sex', 'Gender',  c('male','female', 'unknown'), width = "50%")
-            )
-          ),
-          fluidRow(
-              h4('ECG & Imaging:'),
-              column(6,
-               sliderInput('oldpeak', 'ST depression',0,5,3.0,0.2),
-               selectInput('slope', 'The slope of the peak exercise ST segment', c('upsloping','flat', 'downsloping'), width = "75%"),
-               selectInput('ca', 'Major vessels colored by fluoroscopy', c('0','1', '2','3'), width = "75%")
-              ),
-              column(6,
-               textInput('threstbps', 'Resting blood pressure in mmHg','80', width = "75%"),
-               textInput('thalach', 'Maximum heart rate achieved per minute','180', width = "75%"),
-               selectInput('restecg', 'Resting electrocardiographic results',  c('normal','having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV', 'showing probable or definite left ventricular hypertrophy by Estes\'\ criteria'), width = "75%")
-              )
-          ),
-          fluidRow(
-            h4('Lab results:'),
-            fluidRow(
-              column(6,
-                     sliderInput('chol', 'Serum cholesterol in mg/dl',0,20,3.5,0.2)
-              ),
-              column(6,
-                     selectInput('fbs', 'Fasting blood glucose >120mg/dl', c('no','yes'), width = "50%")
-              )
-            )
+    tabItems(
+      tabItem(tabName = "info",
+        column(width = 6,
+          box(width = NULL, status = "danger",
+            HTML("<h1 style='text-align: center; color:red; font-weight: bold;'>HeartSpot</h1>"),
+            HTML("<img src='image4.png' style='display: block; margin-left: auto; margin-right: auto; width: 80%;'/>"),
+            HTML("<p style='text-align: center; color:gray; font-weight: bold; font-style: italic;'>AI-powered Heart Disease prediction tool</p>")
           )
         ),
-        verticalLayout(
-          h2("Prediciton"),
-          submitButton(text="submit", icon=NULL),
-          plotOutput('plot1'),
-          textOutput("text")
+        column(width = 6,
+          box(width = NULL, status = "danger",
+            h3("Description"),
+            HTML("<p align='justify'>The system you have accessed is an AI-powered web application build for health care professionals to predict the presence of Heart Disease 
+                 in a patient. We have implemented a Decision Tree model and used the <a href='http://archive.ics.uci.edu/ml/datasets/Heart+Disease'>UCI Heart Disease dataset</a> to train and test this system.</p>"),
+            h3("Usage"),
+            p(align = "justify", "By navigating to the prediction tab, you will be able to enter the variables this tool needs to calculate its prediciton. In total, this tool needs information about 10 different
+                                 parameters. When all of them are entered, press the Apply button to get the prediction."),
+            h3("Background"),
+            HTML("<p align='justify'>We are Health Informatics students from Karolinska Institutet in Stockholm who have build this application as part of a course project. If you are interested 
+                 in our source code or would like to get in touch with us, please have a look at our <a href='https://github.com'>GitHub</a> repository.</p>")
+          )
+        )
+      ),
+      tabItem(tabName = "prediction",
+        fluidRow(
+          column(width = 8,
+            h2("Decision Tree"),
+            box(width = NULL, status = "danger",
+              plotOutput('plot1'),
+              actionButton(inputId="button", label="Apply to input")
+            ),
+            h2("Interpretation"),
+            box(width = NULL, status = "danger",
+              textOutput("text")
+            )
+          ),
+          column(width = 4,
+            h2("Data Input"),
+            box(width = NULL, title = "Demographics", status = "danger",
+              numericInput('Age', 'Age','25', width = "50%"),  
+              selectInput('Sex', 'Gender',  c('male','female', 'unknown'), width = "50%")
+            ),
+            box(width = NULL, title = "Symptoms", status = "danger",
+              selectInput('CP', 'Chest Pain',  c('typical angina','atypical angina', 'non-anginal pain', 'asymptomatic'), width = "75%"),
+              selectInput('exang', 'Exercise-induced angina', c('no','yes'), width = "75%")
+            ),
+            box(width = NULL, title = "ECG", status = "danger",
+              sliderInput('oldpeak', 'ST depression',0,5,3.0,0.2),
+              numericInput('trestbps', 'Resting blood pressure in mmHg','120', width = "75%"),
+              numericInput('thalach', 'Maximum heart rate achieved per minute','180', width = "75%"),
+              selectInput('restecg', 'Resting electrocardiographic results',  c(restecg.result1, restecg.result2, restecg.result3), width = "75%")
+            ),
+            box(width = NULL, title = "Lab results", status = "danger",
+              numericInput('chol', 'Serum cholesterol in mg/dl','200', width = "50%"),
+              selectInput('fbs', 'Fasting blood glucose >120mg/dl', c('no','yes'), width = "50%")
+            )
+          )
         )
       )
     )
   )
 )
 
-# Define server logic ----
 server <- function(input, output) {
-  clusters <- reactive({
-    #execute kmeans here(need data, and number of clusters as parameters) 
-    k_means(datanorm, input$oldpeak)
+
+  sex <- reactive({
+    if (input$Sex == 'male'){
+      sex <- 1
+    } else if(input$Sex == 'female'){
+      sex <- 0
+    } 
   })
   
-  output$plot1 <- renderPlot({ #plot output
-    plot(datanorm, col = clusters()$cluster, pch = 16, cex =1)
-    points(clusters()$centers, pch = 10, cex = 3, lwd = 4,col = 'purple')
+  cp <- reactive({
+    if (input$CP == 'typical angina'){
+      cp <- 1
+    } else if(input$CP == 'atypical angina'){
+      cp <- 2
+    } else if(input$CP == 'non-anginal pain'){
+      cp <- 3
+    } else if(input$CP == 'asymptomatic'){
+      cp <- 4
+    }
   })
   
-  output$text <- renderText({ 
-    "This patient is at a HIGH risk of having or developing IHD" 
+  exang <- reactive({
+    if (input$exang == 'no'){
+      exang <- 0
+    } else if(input$exang == 'yes'){
+      exang <- 1
+    } 
+  })
+  
+  restecg <- reactive({
+    if (input$restecg == restecg.result1){
+      restecg <- 0
+    } else if(input$restecg == restecg.result2){
+      restecg <- 1
+    } else if(input$restecg == restecg.result3){
+      restecg <- 2
+    }
+  })
+  
+  fbs <- reactive({
+    if (input$fbs == 'no'){
+      fbs <- 0
+    } else if(input$fbs == 'yes'){
+      fbs <- 1
+    } 
+  })
+  
+  output$plot1 <- renderPlot({ 
+    plot(tree.trained)
+    text(tree.trained, pretty=0)
+  })
+  
+  observeEvent(input$button, {
+    
+    userfeatures <- data.frame(age = as.integer(input$Age), 
+                               sex = sex(), 
+                               cp = cp(), 
+                               trestbps = input$trestbps, 
+                               chol = input$chol, 
+                               fbs = fbs(), 
+                               restecg = restecg(), 
+                               thalach = input$thalach, 
+                               exang = exang(), 
+                               oldpeak = input$oldpeak)
+    
+    pred <- predict(tree.trained, userfeatures, type="class")
+    
+    output$text <- renderText({ 
+      if (pred == 1){
+        "This patient is at a HIGH risk of having or developing Heart Disease."
+      } else{
+        "This patient is at a LOW risk of having or developing Heart Disease."
+      }
     })
+  })
 }
-# Run the app ----
+
 shinyApp(ui = ui, server = server)

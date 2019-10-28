@@ -8,3 +8,18 @@
   font-weight: bold;
   font-size: 28px;
 }
+
+h1 {
+  font-family: "Pacifico";
+  font-weight: bold;
+  color: red;
+}
+
+h3 {
+  font-family: "Georgia";
+  text-decoration: underline;
+}
+
+p {
+  font-size: 18px;
+}

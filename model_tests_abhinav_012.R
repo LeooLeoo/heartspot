@@ -6,7 +6,7 @@ library(adabag)
 library(Matrix)
 library(xgboost)
 #train_data_01 <- read.csv(file="/Users/abhinavsharma/Desktop/datasets/new_data_01.csv")
-train_data_012 <- read.csv(file="/Users/abhinavsharma/Desktop/datasets/new_data_012.csv")
+train_data_012 <- read.csv(file="./datasets/new_data_012.csv")
 #test_data <- read.csv(file="/Users/abhinavsharma/Desktop/datasets/testing_data.csv")
 #coverting class columns as factors
 #train_data_01$class <- as.factor(train_012$class)
@@ -24,11 +24,13 @@ label = as.integer(train_data_012$class)#convert class to label
 
 set.seed(1)
 n = nrow(train_data_012)
-train_index = sample(n,floor(0.80*n))
+train_index = sample(n,floor(0.8*n))
 train_012 = train_data_012[train_index,]
 train_label_012 = label[train_index]
 val_data_012 = train_data_012[-train_index,]
 val_label_012 = label[-train_index]
+
+
 #decision trees
 set.seed(3)
 tree.train_012 = tree(as.factor(train_012$class)~., train_012)
@@ -42,27 +44,37 @@ res_dt <- table(prediction_dt, val_data_012$class)
 res_dt
 
 dt.accuracy <- (res_dt[1,1] + res_dt[2,2] + res_dt[3,3])/sum(res_dt)
-dt.precision_class0 <- res_dt[1,1]/(res_dt[1,1] + res_dt[2,1] + res_dt[3,1])
-dt.recall_class0 <- res_dt[1,1]/(res_dt[1,1]+res_dt[1,2] + res_dt[1, 3])
+dt.precision_class0 <- res_dt[1,1]/(res_dt[1,1] + res_dt[1,2] + res_dt[1,3])
+dt.recall_class0 <- res_dt[1,1]/(res_dt[1,1]+res_dt[2,1] + res_dt[3, 1])
+dt.precision_class1 <- res_dt[2,2]/(res_dt[2,1] + res_dt[2,2] + res_dt[2,3])
+dt.recall_class1 <- res_dt[2,2]/(res_dt[1,2]+res_dt[2,2] + res_dt[3, 2])
+dt.precision_class2 <- res_dt[3,3]/(res_dt[3,1] + res_dt[3,2] + res_dt[3,3])
+dt.recall_class2 <- res_dt[3,3]/(res_dt[1,3]+res_dt[2,3] + res_dt[3, 3])
+print(c(dt.accuracy, dt.precision_class0, dt.recall_class0))
+print(c(dt.accuracy, dt.precision_class1, dt.recall_class1))
+print(c(dt.accuracy, dt.precision_class2, dt.recall_class2))
 
-dt.accuracy
-dt.precision_class0
-dt.recall_class0
 
 #random forests
 set.seed(3)
-rf.data <- randomForest(as.factor(train_012$class)~., train_012, ntree=10)
+rf.data <- randomForest(as.factor(train_012$class)~., train_012, ntree=20)
 
 prediction_rf <- predict(rf.data, val_data_012, type="class")
 res_rf <- table(prediction_rf, val_data_012$class)
 res_rf
 
 rf.accuracy <- (res_rf[1,1] + res_rf[2,2] + res_rf[3,3])/sum(res_rf)
-rf.precision_class0 <- res_rf[1,1]/(res_rf[1,1] + res_rf[2,1]+ res_rf[3,1])
-rf.recall_class0 <- res_rf[1,1]/(res_rf[1,1]+res_rf[1,2]+ res_rf[1,3])
-rf.accuracy
-rf.precision_class0
-rf.recall_class0
+rf.precision_class0 <- res_rf[1,1]/(res_rf[1,1] + res_rf[1,2] + res_rf[1,3])
+rf.recall_class0 <- res_rf[1,1]/(res_rf[1,1]+res_rf[2,1] + res_rf[3, 1])
+rf.precision_class1 <- res_rf[2,2]/(res_rf[2,1] + res_rf[2,2] + res_rf[2,3])
+rf.recall_class1 <- res_rf[2,2]/(res_rf[1,2]+res_rf[2,2] + res_rf[3, 2])
+rf.precision_class2 <- res_rf[3,3]/(res_rf[3,1] + res_rf[3,2] + res_rf[3,3])
+rf.recall_class2 <- res_rf[3,3]/(res_rf[1,3]+res_rf[2,3] + res_rf[3, 3])
+print(c(rf.accuracy, rf.precision_class0, rf.recall_class0))
+print(c(rf.accuracy, rf.precision_class1, rf.recall_class1))
+print(c(rf.accuracy, rf.precision_class2, rf.recall_class2))
+
+
 #support vector machines
 set.seed(3)
 svm.data <- svm(as.factor(train_012$class)~., train_012, kernel = "polynomial")
@@ -71,18 +83,34 @@ prediction_svm <- predict(svm.data, val_data_012, type="class")
 res_svm <- table(prediction_svm, val_data_012$class)
 res_svm
 
-accuracy <- (res_svm[1,1] + res_svm[2,2] + res_svm[3,3])/sum(res_svm)
-precision <- res_svm[1,1]/(res_svm[1,1]+res_svm[2,1]+ res_svm[3,1])
-recall <- res_svm[1,1]/(res_svm[1,1]+res_svm[1,2]+ res_svm[1,3])
+svm.accuracy <- (res_svm[1,1] + res_svm[2,2] + res_svm[3,3])/sum(res_svm)
+svm.precision_class0 <- res_svm[1,1]/(res_svm[1,1] + res_svm[1,2] + res_svm[1,3])
+svm.recall_class0 <- res_svm[1,1]/(res_svm[1,1]+res_svm[2,1] + res_svm[3, 1])
+svm.precision_class1 <- res_svm[2,2]/(res_svm[2,1] + res_svm[2,2] + res_svm[2,3])
+svm.recall_class1 <- res_svm[2,2]/(res_svm[1,2]+res_svm[2,2] + res_svm[3, 2])
+svm.precision_class2 <- res_svm[3,3]/(res_svm[3,1] + res_svm[3,2] + res_svm[3,3])
+svm.recall_class2 <- res_svm[3,3]/(res_svm[1,3]+res_svm[2,3] + res_svm[3, 3])
+print(c(svm.accuracy, svm.precision_class0, svm.recall_class0))
+print(c(svm.accuracy, svm.precision_class1, svm.recall_class1))
+print(c(svm.accuracy, svm.precision_class2, svm.recall_class2))
 
-accuracy
-precision
-recall
 # multiclass adaboost classifier
 set.seed(5)
 ada <- adabag::boosting(class~., data = train_012, mfinal = 100)
 prediction_ada <- adabag::predict.boosting(ada, val_data_012)
-prediction_ada$confusion
+res_ada <- prediction_ada$confusion
+res_ada 
+
+ada.accuracy <- (res_ada[1,1] + res_ada[2,2] + res_ada[3,3])/sum(res_ada)
+ada.precision_class0 <- res_ada[1,1]/(res_ada[1,1] + res_ada[1,2] + res_ada[1,3])
+ada.recall_class0 <- res_ada[1,1]/(res_ada[1,1]+res_ada[2,1] + res_ada[3, 1])
+ada.precision_class1 <- res_ada[2,2]/(res_ada[2,1] + res_ada[2,2] + res_ada[2,3])
+ada.recall_class1 <- res_ada[2,2]/(res_ada[1,2]+res_ada[2,2] + res_ada[3, 2])
+ada.precision_class2 <- res_ada[3,3]/(res_ada[3,1] + res_ada[3,2] + res_ada[3,3])
+ada.recall_class2 <- res_ada[3,3]/(res_ada[1,3]+res_ada[2,3] + res_ada[3, 3])
+print(c(ada.accuracy, ada.precision_class0, ada.recall_class0))
+print(c(ada.accuracy, ada.precision_class1, ada.recall_class1))
+print(c(ada.accuracy, ada.precision_class2, ada.recall_class2))
 
 #XGBoost
 
@@ -113,7 +141,7 @@ xgb.test = xgb.DMatrix(data=val_data_012,label=(val_label_012 -1))
 params = list(
   booster="gbtree",
   eta=0.001,
-  max_depth=5,
+  max_depth=10,
   gamma=3,
   subsample=0.75,
   colsample_bytree=1,
@@ -150,12 +178,18 @@ xgb.pred$label = val_label_012
 table <- table(xgb.pred$prediction, xgb.pred$label) 
 table
 res_xgboost <- table
-xgb.accuracy <- (res_xgboost[1,1] + res_xgboost[2,2] + res_xgboost[3,3])/sum(res_xgboost)
-xgb.precision_class0 <- res_xgboost[1,1]/(res_xgboost[1,1] + res_xgboost[2,1] + res_xgboost[3,1])
-xgb.recall_class0 <- res_xgboost[1,1]/(res_xgboost[1,1]+res_xgboost[1,2]+ res_xgboost[1,3])
-xgb.accuracy
-xgb.precision_class0
-xgb.recall_class0
+
+
+xgboost.accuracy <- (res_xgboost[1,1] + res_xgboost[2,2] + res_xgboost[3,3])/sum(res_xgboost)
+xgboost.precision_class0 <- res_xgboost[1,1]/(res_xgboost[1,1] + res_xgboost[1,2] + res_xgboost[1,3])
+xgboost.recall_class0 <- res_xgboost[1,1]/(res_xgboost[1,1]+res_xgboost[2,1] + res_xgboost[3, 1])
+xgboost.precision_class1 <- res_xgboost[2,2]/(res_xgboost[2,1] + res_xgboost[2,2] + res_xgboost[2,3])
+xgboost.recall_class1 <- res_xgboost[2,2]/(res_xgboost[1,2]+res_xgboost[2,2] + res_xgboost[3, 2])
+xgboost.precision_class2 <- res_xgboost[3,3]/(res_xgboost[3,1] + res_xgboost[3,2] + res_xgboost[3,3])
+xgboost.recall_class2 <- res_xgboost[3,3]/(res_xgboost[1,3]+res_xgboost[2,3] + res_xgboost[3, 3])
+print(c(xgboost.accuracy, xgboost.precision_class0, xgboost.recall_class0))
+print(c(xgboost.accuracy, xgboost.precision_class1, xgboost.recall_class1))
+print(c(xgboost.accuracy, xgboost.precision_class2, xgboost.recall_class2))
 
 #Testing on external dataset
 xgb.test.ext = xgb.DMatrix(data=as.matrix(test_data))
