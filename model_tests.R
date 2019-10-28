@@ -6,16 +6,17 @@ library(e1071)
 training_data <- read.csv(file="datasets/training_data.csv")
 test_data <- read.csv(file="datasets/testing_data.csv")
 
-calculate_performance_table <- function(conmatrix, classnum) {
+#performance function encapsulation
+calculate_performance_table <- function(conmatrix, classnum) { #confusion matrix and class number
   # transpose matrix
   conmatrix <- t(conmatrix)
 
   # performance table
-  performance <- matrix( rep( 0, len=(6*(classnum+1))), nrow = (classnum+1))
-  colnames(performance) <- c("Precision", "Recall", "F1-Score", "TP", "FP", "FN")
+  performance <- matrix( rep( 0, len=(7*(classnum+1))), nrow = (classnum+1)) #new container
+  colnames(performance) <- c("Precision", "Recall", "F1-Score", "TP", "FP", "FN","Accuracy")
   rownames(performance) <- c("Class0", "Class1", "Class2", "Class3", "Class4", "Average")
   
-  accuracy <- (conmatrix[1,1] + conmatrix[2,2] + conmatrix[3,3] + conmatrix[4,4] + conmatrix[5,5])/sum(conmatrix)
+  
   # calculate all metrics of all classes and fill the table
   for (i in 1:classnum) {
     # precison
@@ -30,14 +31,17 @@ calculate_performance_table <- function(conmatrix, classnum) {
     performance[i,5] <- sum(conmatrix[,i]) - conmatrix[i,i]
     # false negatives
     performance[i,6] <- sum(conmatrix[i,]) - conmatrix[i,i]
+    #accuracy
+    performance[,7] <- sum(diag(conmatrix))/sum(conmatrix)
   }
   
   # compute average of all metrics
   for (i in 1:(classnum)+1) {
-    performance[(classnum+1), i] <- ((performance[1,i] + performance[2,i] + performance[3,i] + performance[4,i] + performance[5,i]) / classnum)
+    performance[(classnum+1), i] <- (sum(performance[1:classnum,i]) / classnum)
   }
   
   performance <- as.table(performance)
+  print(conmatrix)
   return(performance)
 }
 
@@ -52,17 +56,7 @@ tree.performance <- calculate_performance_table(res_dt, 5)
 tree.performance
 
 ########## random forests ##########
-# number of trees: 3
-set.seed(3)
-rf.data <- randomForest(as.factor(training_data$class)~., training_data, ntree=3)
-
-prediction_rf <- predict(rf.data, test_data, type="class")
-res_rf <- table(prediction_rf, test_data$class)
-
-rf.performance <- calculate_performance_table(res_rf, 5)
-rf.performance
-
-# number of trees: 5
+# number of trees: ntree = 3/5/10/20
 set.seed(3)
 rf.data <- randomForest(as.factor(training_data$class)~., training_data, ntree=5)
 
@@ -72,40 +66,11 @@ res_rf <- table(prediction_rf, test_data$class)
 rf.performance <- calculate_performance_table(res_rf, 5)
 rf.performance
 
-# number of trees: 10
-set.seed(3)
-rf.data <- randomForest(as.factor(training_data$class)~., training_data, ntree=10)
-
-prediction_rf <- predict(rf.data, test_data, type="class")
-res_rf <- table(prediction_rf, test_data$class)
-
-rf.performance <- calculate_performance_table(res_rf, 5)
-rf.performance
 
 ########## support vector machines ##########
-# linear kernel
+# kernel =linear /radial /polynomial
 set.seed(3)
 svm.data <- svm(as.factor(training_data$class)~., training_data, kernel = "linear")
-
-prediction_svm <- predict(svm.data, test_data, type="class")
-res_svm <- table(prediction_svm, test_data$class)
-
-svm.performance <- calculate_performance_table(res_svm, 5)
-svm.performance
-
-# polynomial kernel
-set.seed(3)
-svm.data <- svm(as.factor(training_data$class)~., training_data, kernel = "polynomial")
-
-prediction_svm <- predict(svm.data, test_data, type="class")
-res_svm <- table(prediction_svm, test_data$class)
-
-svm.performance <- calculate_performance_table(res_svm, 5)
-svm.performance
-
-# radial kernel
-set.seed(3)
-svm.data <- svm(as.factor(training_data$class)~., training_data, kernel = "radial")
 
 prediction_svm <- predict(svm.data, test_data, type="class")
 res_svm <- table(prediction_svm, test_data$class)
