@@ -12,10 +12,13 @@
 
 We use [Github](https://github.com/) for versioning. For the versions available, see the [tags on this repository](https://github.com/Afsharov/heartspot).
 
+## Demo
+[HeartSpot](https://leeo4fun.shinyapps.io/heartspot/)
+
 ## Authors
 
 * **Abhinav Sharma** - [abhinavsharma1423](https://github.com/abhinavsharma1423) -
-* **Jintai Liu** - [LeooLeoo](https://github.com/LeooLeoo) - 
+* **Jintai Liu** - [LeooLeoo](https://github.com/LeooLeoo) - *Developer*
 * **Karl Lindborg** - [Karllindborg](https://github.com/Karllindborg) - 
 * **Masud Afschar** - [Afsharov](https://github.com/Afsharov) - *Developer*
 * **Suheng Shi** - [suhengshi](https://github.com/suhengshi) - 

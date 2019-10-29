@@ -1,0 +1,13 @@
+name: heartspot
+title: heartspot
+username:
+account: leeo4fun
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1397629
+bundleId: 2549629
+url: https://leeo4fun.shinyapps.io/heartspot/
+when: 1572389701.59434
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rbuildignore|.RData|.travis.yml|data_preprocess.R|DESCRIPTION|ex_xgboost.R|LICENSE|model_tests_01.R|model_tests_abhinav_012.R|model_tests.R|multinomial_regression.R|processed.cleveland.csv|README.md|run_tests.R|xgboost_without_class_label.R|tests/test.R
